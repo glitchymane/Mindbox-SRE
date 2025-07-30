@@ -10,7 +10,7 @@ spec:
     kind: Deployment
     name: typescript-ha-app
   minReplicas: 2 # Минимум для ночи
-  maxReplicas: 4  # тесты показали, что держим в пике, мб стоило добавить 5, так как тесты != реальная нагрузка
+  maxReplicas: 5  # тесты показали, что держим в пике, мб стоило добавить 6, так как тесты != реальная нагрузка
   metrics:
     - type: Resource
       resource:
