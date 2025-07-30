@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: typescript-ha-app
+  labels:
+    app: typescript-ha-app
+    tier: backend
+spec:
+  replicas: 4  # при пиковой нагрузке
+  revisionHistoryLimit: 2  # храним только 2 версии деплоймента, для ресурсов
+  selector:
+    matchLabels:
+      app: typescript-ha-app
+  template:
+    metadata:
+      labels:
+        app: typescript-ha-app
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"  # предполагаем prometheus
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1 # максимальное отклонение
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway # если не получается идеально распределить
+          labelSelector:
+            matchLabels:
+              app: typescript-ha-app
+        - maxSkew: 1 # максимальное отклонение
+          topologyKey: kubernetes.io/hostname # распределяем по нодам
+          whenUnsatisfiable: ScheduleAnyway # если не получается идеально распределить
+          labelSelector:
+            matchLabels:
+              app: typescript-ha-app
+      containers:
+        - name: app
+          image: your-registry/typescript-ha-app:stable  # Pinned to stable tag
+          imagePullPolicy: IfNotPresent # качаем образ, только если его нет локально
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"  # нормальное использование
+            limits:
+              memory: "128Mi"
+              cpu: "500m"  # пик учитывающий инициализацию
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10  # Максимальное время инициализации
+            periodSeconds: 5 # частота проверки
+            successThreshold: 1 # 1 успешная проверка для подтверждения готовности
+            failureThreshold: 3 # 3 неудачных, если контейнер не готов
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20  # обязательно больше чем у readiness, чтобы приложение успело заинитится
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 30  # всего на старт даем 5 минут
+            periodSeconds: 10
+      terminationGracePeriodSeconds: 45

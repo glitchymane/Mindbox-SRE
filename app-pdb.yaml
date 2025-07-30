@@ -1,0 +1,9 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: typescript-ha-app-pdb
+spec:
+  minAvailable: 2  # всегда минимум 2 пода работают
+  selector:
+    matchLabels:
+      app: typescript-ha-app

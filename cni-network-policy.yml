@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: typescript-ha-app-allow
+spec:
+  podSelector:
+    matchLabels:
+      app: typescript-ha-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: typescript-ha-app
+      ports:
+        - port: http

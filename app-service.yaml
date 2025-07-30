@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: typescript-ha-app
+  labels:
+    app: typescript-ha-app
+    tier: backend
+spec:
+  selector:
+    app: typescript-ha-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: ClientIP  # Поддержка состояния по Ip
